@@ -84,11 +84,9 @@ iptables-firewall-lab/
 
 1. **Install Required Packages**
    ```bash
-   # Ubuntu/Debian
    sudo apt update
    sudo apt install iptables iptables-persistent ipset
    
-   # CentOS/RHEL
    sudo yum install iptables iptables-services ipset
    ```
 
@@ -122,29 +120,23 @@ iptables-firewall-lab/
 ### Base Security Rules
 
 ```bash
-# Default policies
 iptables -P INPUT DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT ACCEPT
 
-# Allow established connections
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
-# Allow loopback
 iptables -A INPUT -i lo -j ACCEPT
 
-# Allow ICMP for troubleshooting
 iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
 ```
 
 ### Web Server Protection
 
 ```bash
-# HTTP/HTTPS traffic
 iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 
-# Rate limiting for web traffic
 iptables -A INPUT -p tcp --dport 80 -m limit --limit 25/minute --limit-burst 100 -j ACCEPT
 iptables -A INPUT -p tcp --dport 443 -m limit --limit 25/minute --limit-burst 100 -j ACCEPT
 ```
@@ -181,16 +173,13 @@ iptables -A INPUT -p tcp --dport 443 -m limit --limit 25/minute --limit-burst 10
 
 1. **Security Validation**
    ```bash
-   # Test blocked ports
    nmap -sS -p 22,23,3389 target_ip
    
-   # Test rate limiting
    for i in {1..50}; do curl -I http://target_ip; done
    ```
 
 2. **Functionality Validation**
    ```bash
-   # Test allowed services
    curl -I https://target_ip
    ssh user@target_ip
    ```
@@ -200,11 +189,9 @@ iptables -A INPUT -p tcp --dport 443 -m limit --limit 25/minute --limit-burst 10
 ### Log Configuration
 
 ```bash
-# Enable logging for dropped packets
 iptables -A INPUT -j LOG --log-prefix "IPTABLES-DROPPED: "
 iptables -A FORWARD -j LOG --log-prefix "IPTABLES-FORWARD-DROPPED: "
 
-# Configure log rotation
 cat > /etc/logrotate.d/iptables << EOF
 /var/log/iptables.log {
     daily
@@ -220,10 +207,8 @@ EOF
 ### Log Analysis
 
 ```bash
-# Monitor blocked connections
 tail -f /var/log/iptables.log | grep "IPTABLES-DROPPED"
 
-# Analyze attack patterns
 grep "IPTABLES-DROPPED" /var/log/iptables.log | awk '{print $12}' | sort | uniq -c | sort -nr
 ```
 
@@ -233,7 +218,6 @@ grep "IPTABLES-DROPPED" /var/log/iptables.log | awk '{print $12}' | sort | uniq 
 
 ```bash
 #!/bin/bash
-# firewall_manager.sh - Centralized firewall management
 
 case "$1" in
     start)
@@ -266,7 +250,6 @@ esac
 
 ```bash
 #!/bin/bash
-# ip_blocker.sh - Dynamic IP blocking
 
 BLOCKED_IPS="/etc/iptables/blocked_ips.txt"
 
@@ -307,26 +290,21 @@ unblock_ip() {
 
 1. **Locked Out of System**
    ```bash
-   # Emergency access via console
    iptables -F
    iptables -P INPUT ACCEPT
    ```
 
 2. **Service Not Accessible**
    ```bash
-   # Check if port is open
    iptables -L -n | grep PORT_NUMBER
    
-   # Test connectivity
    telnet localhost PORT_NUMBER
    ```
 
 3. **Performance Issues**
    ```bash
-   # Check rule statistics
    iptables -L -v -n
    
-   # Monitor CPU usage
    top -p $(pgrep iptables)
    ```
 
